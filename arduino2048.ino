@@ -13,6 +13,7 @@ U8G2_ST7920_128X64_F_HW_SPI u8g2(U8G2_R2, /* CS=*/10, /* reset=*/12); //LCD12864
 #define Right 7
 
 //#define CHEAT  //开局生成两个1024以作弊
+//#define TEST_MODE //开启数字块显示测试
 
 inline int getRand(int a, int b)
 {
@@ -40,10 +41,12 @@ class board
     void summon(bool noFour = false);
     bool isOver();
     bool isWon();
-    bool isChanged()
-    {
+    bool isChanged() {
       return changed;
-    };
+    }
+    int getScore() {
+      return score;
+    }
     bool LeftOne(int ro);
     bool RightOne(int ro);
     bool UpOne(int ro);
@@ -62,6 +65,19 @@ void board::init()
 #ifdef CHEAT
   map[0][0] = 1024;
   map[1][0] = 1024;
+#endif
+#ifdef TEST_MODE
+  map[0][0] = 2;
+  map[0][1] = 4;
+  map[0][2] = 8;
+  map[0][3] = 16;
+  map[1][0] = 32;
+  map[1][1] = 64;
+  map[1][2] = 128;
+  map[1][3] = 256;
+  map[2][0] = 512;
+  map[2][1] = 1024;
+  map[2][2] = 2048;
 #endif
   changed = true;
   score = 0;
@@ -308,13 +324,17 @@ void loop()
 {
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_maniac_tr);
-  u8g2.drawStr(27, 24, "2048");
+  u8g2.drawStr(30, 24, "2048");
   u8g2.setFont(u8g2_font_7x14B_mr);
   u8g2.drawStr(48, 48, "Start");
   u8g2.drawFrame(45, 36, 40, 15);
   u8g2.sendBuffer();
   getKey();
   Game.init();
+#ifdef TEST_MODE
+  Game.updateDisplay();
+  for (;;);
+#endif
   while (!(Game.isOver() || Game.isWon()))
   {
     if (Game.isChanged())
@@ -353,5 +373,13 @@ void loop()
     u8g2.drawStr(23, 53, "Over");
   }
   u8g2.sendBuffer();
-  delay(2000);
+  delay(1500);
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_crox4t_tr);
+  char score_str[6];
+  itoa(Game.getScore(), score_str, 10);
+  u8g2.drawStr(20, 28, "Your score:");
+  u8g2.drawStr(20, 48, score_str);
+  u8g2.sendBuffer();
+  delay(2500);
 }
